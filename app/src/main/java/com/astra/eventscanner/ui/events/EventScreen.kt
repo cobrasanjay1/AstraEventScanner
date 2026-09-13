@@ -23,6 +23,9 @@ import com.astra.eventscanner.ui.components.NeoBrutalistCard
 import com.astra.eventscanner.ui.theme.Black
 import com.astra.eventscanner.ui.theme.Cream
 import com.astra.eventscanner.ui.theme.PrimaryPurple
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun EventScreen(
@@ -107,15 +110,29 @@ fun EventCard(event: EventDto, onClick: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = event.eventDate,
+                text = formatEventDate(event.eventDate),
                 fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                 color = Black.copy(alpha = 0.7f)
             )
             Text(
-                text = event.venue,
-                fontSize = 14.sp,
-                color = Black.copy(alpha = 0.7f)
+                text = event.venue.uppercase(),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                color = Black.copy(alpha = 0.6f)
             )
         }
+    }
+}
+
+private fun formatEventDate(dateString: String): String {
+    return try {
+        val dateTime = OffsetDateTime.parse(dateString)
+        val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy • hh:mm a", Locale.ENGLISH)
+        dateTime.format(formatter).uppercase()
+    } catch (e: Exception) {
+        dateString
     }
 }
