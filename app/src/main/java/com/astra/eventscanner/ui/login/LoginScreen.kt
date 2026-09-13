@@ -2,6 +2,7 @@ package com.astra.eventscanner.ui.login
 
 import android.util.Base64
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.CircularProgressIndicator
@@ -14,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -22,6 +24,7 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import com.astra.eventscanner.BuildConfig
+import com.astra.eventscanner.R
 import com.astra.eventscanner.ui.components.NeoBrutalistButton
 import com.astra.eventscanner.ui.theme.Black
 import com.astra.eventscanner.ui.theme.Cream
@@ -54,18 +57,19 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "ASTRA",
-            color = Black,
-            fontSize = 40.sp,
-            fontWeight = FontWeight.Black,
-            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+        Image(
+            painter = painterResource(id = R.drawable.ic_logo),
+            contentDescription = "Astra Logo",
+            modifier = Modifier.size(120.dp)
         )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+
         Text(
-            text = "EVENT SCANNER",
+            text = "ASTRA EVENT SCANNER",
             color = Black,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Black,
             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
         )
 

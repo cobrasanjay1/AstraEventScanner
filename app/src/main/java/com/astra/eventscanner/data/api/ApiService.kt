@@ -18,6 +18,6 @@ interface ApiService {
         @Path("token") token: String
     ): ScanResponse
 
-    @GET("api/admin-registrations/")
+    @GET("admin/events/registration/")
     suspend fun getAllRegistrations(): List<AdminRegistrationDto>
 }
