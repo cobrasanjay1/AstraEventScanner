@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import com.astra.eventscanner.ui.components.NeoBrutalistCard
 import com.astra.eventscanner.ui.theme.*
 
@@ -33,6 +34,21 @@ fun StatsScreen(
         viewModel.loadStats(eventId)
     }
 
+    StatsContent(
+        eventName = eventName,
+        stats = stats,
+        isLoading = isLoading,
+        error = error
+    )
+}
+
+@Composable
+fun StatsContent(
+    eventName: String,
+    stats: UiEventStats?,
+    isLoading: Boolean,
+    error: String?
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -60,16 +76,16 @@ fun StatsScreen(
                 CircularProgressIndicator(color = PrimaryPurple)
             }
         } else if (error != null) {
-            Text(text = error!!, color = Color.Red)
+            Text(text = error, color = Color.Red)
         } else if (stats != null) {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                item { StatCard("SCANNED", stats!!.scanned.toString(), PrimaryPurple) }
-                item { StatCard("TOTAL", stats!!.total.toString(), Color.White) }
-                item { StatCard("REMAINING", stats!!.remaining.toString(), Color.White) }
+                item { StatCard("SCANNED", stats.scanned.toString(), PrimaryPurple) }
+                item { StatCard("TOTAL", stats.total.toString(), Color.White) }
+                item { StatCard("REMAINING", stats.remaining.toString(), Color.White) }
             }
         }
     }
@@ -97,4 +113,15 @@ fun StatCard(label: String, value: String, color: Color) {
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun StatsScreenPreview() {
+    StatsContent(
+        eventName = "Sample Event",
+        stats = UiEventStats(scanned = 45, total = 100, remaining = 55),
+        isLoading = false,
+        error = null
+    )
 }

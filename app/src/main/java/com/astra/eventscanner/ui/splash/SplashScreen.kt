@@ -18,6 +18,7 @@ import com.astra.eventscanner.R
 import com.astra.eventscanner.ui.theme.Black
 import com.astra.eventscanner.ui.theme.PrimaryPurple
 import kotlinx.coroutines.delay
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun SplashScreen(
@@ -28,6 +29,11 @@ fun SplashScreen(
         onSplashFinished()
     }
 
+    SplashScreenContent()
+}
+
+@Composable
+fun SplashScreenContent() {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -64,4 +70,10 @@ fun SplashScreen(
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SplashScreenPreview() {
+    SplashScreenContent()
 }

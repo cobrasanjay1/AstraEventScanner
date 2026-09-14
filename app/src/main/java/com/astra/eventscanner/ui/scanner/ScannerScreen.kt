@@ -30,7 +30,7 @@ import com.astra.eventscanner.ui.components.ScannerFrame
 import com.astra.eventscanner.ui.theme.Black
 import com.astra.eventscanner.ui.theme.ElectricLime
 import java.util.concurrent.Executors
-
+import androidx.compose.ui.tooling.preview.Preview as ComposePreview
 @Composable
 fun ScannerScreen(
     selectedEventId: Int,
@@ -111,7 +111,7 @@ fun ScannerScreen(
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                 )
             }
-            
+
             Box(
                 modifier = Modifier
                     .background(ElectricLime)
@@ -177,4 +177,73 @@ fun CameraPreview(onQrDetected: (String) -> Unit) {
         },
         modifier = Modifier.fillMaxSize()
     )
+}
+
+@ComposePreview(
+    showBackground = true,
+    showSystemUi = true
+)
+@Composable
+fun ScannerScreenPreview() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Black)
+    ) {
+        // Fake camera background
+        Box(
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Scanner frame
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(48.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            ScannerFrame()
+        }
+
+        // Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Black.copy(alpha = 0.6f))
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "SAMPLE EVENT",
+                    color = ElectricLime,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Black,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+
+                Text(
+                    text = "SCANNING TICKET...",
+                    color = Color.White,
+                    fontSize = 12.sp,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .background(ElectricLime)
+                    .border(2.dp, Black)
+                    .padding(8.dp)
+            ) {
+                Text(
+                    text = "STATS",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Black
+                )
+            }
+        }
+    }
 }

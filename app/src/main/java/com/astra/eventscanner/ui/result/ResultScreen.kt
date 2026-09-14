@@ -14,9 +14,19 @@ import androidx.compose.ui.unit.sp
 import com.astra.eventscanner.data.model.ScanResponse
 import com.astra.eventscanner.ui.components.NeoBrutalistButton
 import com.astra.eventscanner.ui.theme.*
+import androidx.compose.ui.tooling.preview.Preview
+import com.astra.eventscanner.data.model.RegistrantDto
 
 @Composable
 fun ResultScreen(
+    response: ScanResponse,
+    onScanNext: () -> Unit
+) {
+    ResultContent(response, onScanNext)
+}
+
+@Composable
+fun ResultContent(
     response: ScanResponse,
     onScanNext: () -> Unit
 ) {
@@ -25,6 +35,7 @@ fun ResultScreen(
         response.message.contains("ALREADY USED") -> WarningYellow
         else -> ErrorRed
     }
+// ... (keep the rest of the logic)
 
     val icon = when {
         response.valid -> "✓"
@@ -110,4 +121,46 @@ fun ResultScreen(
             modifier = Modifier.fillMaxWidth()
         )
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ResultScreenValidPreview() {
+    ResultContent(
+        response = ScanResponse(
+            valid = true,
+            message = "Success",
+            registrant = RegistrantDto(
+                id = 1,
+                user = 1,
+                userEmail = "test@example.com",
+                userName = "John Doe",
+                userPhone = "1234567890",
+                phoneNumber = "1234567890",
+                college = "Sample University",
+                department = "Computer Science",
+                yearOfStudy = "3rd",
+                eventId = 1,
+                eventDetails = null,
+                status = "ATTENDED",
+                isUsed = true,
+                teamName = null,
+                teamMembers = null
+            )
+        ),
+        onScanNext = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ResultScreenInvalidPreview() {
+    ResultContent(
+        response = ScanResponse(
+            valid = false,
+            message = "TICKET ALREADY USED",
+            registrant = null
+        ),
+        onScanNext = {}
+    )
 }

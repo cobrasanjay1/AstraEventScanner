@@ -26,6 +26,7 @@ import com.astra.eventscanner.ui.theme.PrimaryPurple
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun EventScreen(
@@ -41,6 +42,23 @@ fun EventScreen(
         viewModel.loadEvents()
     }
 
+    EventContent(
+        events = events,
+        isLoading = isLoading,
+        error = error,
+        onEventSelected = onEventSelected,
+        onSettingsClick = onSettingsClick
+    )
+}
+
+@Composable
+fun EventContent(
+    events: List<EventDto>,
+    isLoading: Boolean,
+    error: String?,
+    onEventSelected: (EventDto) -> Unit,
+    onSettingsClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -78,7 +96,7 @@ fun EventScreen(
                 CircularProgressIndicator(color = PrimaryPurple)
             }
         } else if (error != null) {
-            Text(text = error!!, color = Color.Red)
+            Text(text = error, color = Color.Red)
         } else {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -135,4 +153,47 @@ private fun formatEventDate(dateString: String): String {
     } catch (e: Exception) {
         dateString
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun EventScreenPreview() {
+    EventContent(
+        events = listOf(
+            EventDto(
+                id = 1,
+                title = "Workshop on AI",
+                description = "Learn AI",
+                eventDate = "2026-09-13T17:10:00+05:30",
+                venue = "Main Auditorium",
+                image = null,
+                category = "Workshop",
+                time = "17:10",
+                duration = "2 hours",
+                registrationLimit = 100,
+                isRegistrationOpen = true,
+                requiresPayment = false,
+                paymentAmount = "0"
+            ),
+            EventDto(
+                id = 2,
+                title = "Hackathon",
+                description = "Code all night",
+                eventDate = "2026-09-19T22:52:00+05:30",
+                venue = "Lab 1",
+                image = null,
+                category = "Competition",
+                time = "22:52",
+                duration = "24 hours",
+                registrationLimit = 50,
+                isRegistrationOpen = true,
+                requiresPayment = true,
+                paymentAmount = "500"
+            )
+        ),
+        isLoading = false,
+        error = null,
+        onEventSelected = {},
+        onSettingsClick = {}
+    )
 }

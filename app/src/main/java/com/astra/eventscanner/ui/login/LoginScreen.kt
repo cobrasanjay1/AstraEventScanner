@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
@@ -49,6 +50,75 @@ fun LoginScreen(
         onLoginSuccess()
     }
 
+    LoginContent(
+        isLoading = isLoading,
+        error = error,
+        onLoginClick = {
+            val googleApiAvailability = com.google.android.gms.common.GoogleApiAvailability.getInstance()
+            val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(context)
+            
+            if (resultCode != com.google.android.gms.common.ConnectionResult.SUCCESS) {
+                if (googleApiAvailability.isUserResolvableError(resultCode)) {
+                    viewModel.onError("UPDATE GOOGLE PLAY SERVICES")
+                    googleApiAvailability.getErrorDialog(context as android.app.Activity, resultCode, 9000)?.show()
+                } else {
+                    viewModel.onError("GOOGLE PLAY SERVICES NOT SUPPORTED")
+                }
+            } else {
+                val credentialManager = CredentialManager.create(context)
+                val nonce = ByteArray(32).let {
+                    SecureRandom().nextBytes(it)
+                    Base64.encodeToString(it, Base64.NO_WRAP or Base64.URL_SAFE or Base64.NO_PADDING)
+                }
+
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
+                    .setAutoSelectEnabled(false)
+                    .setNonce(nonce)
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                scope.launch {
+                    try {
+                        val result = credentialManager.getCredential(context, request)
+                        val credential = result.credential
+                        when (credential) {
+                            is GoogleIdTokenCredential -> viewModel.onGoogleLogin(credential.idToken)
+                            is CustomCredential -> {
+                                if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                                    viewModel.onGoogleLogin(googleIdTokenCredential.idToken)
+                                } else {
+                                    viewModel.onError("LOGIN FAILED: UNKNOWN TYPE")
+                                }
+                            }
+                            else -> viewModel.onError("LOGIN FAILED: RETRY")
+                        }
+                    } catch (e: Exception) {
+                        val errorMessage = when {
+                            e.message?.contains("no provider dependencies found") == true -> "SIGN IN TO GOOGLE ON DEVICE\nOR UPDATE PLAY SERVICES"
+                            e.message?.contains("SERVICE_VERSION_UPDATE_REQUIRED") == true -> "UPDATE GOOGLE PLAY SERVICES"
+                            e is androidx.credentials.exceptions.GetCredentialCancellationException -> "SIGN IN CANCELLED"
+                            else -> "AUTH ERROR: ${e.message?.take(30) ?: "UNKNOWN"}"
+                        }
+                        viewModel.onError(errorMessage)
+                    }
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun LoginContent(
+    isLoading: Boolean,
+    error: String?,
+    onLoginClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -77,7 +147,7 @@ fun LoginScreen(
 
         if (error != null) {
             Text(
-                text = error!!, 
+                text = error, 
                 color = Color.Red, 
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
@@ -92,74 +162,7 @@ fun LoginScreen(
         } else {
             NeoBrutalistButton(
                 text = "SIGN IN WITH GOOGLE",
-                onClick = {
-                    val googleApiAvailability = com.google.android.gms.common.GoogleApiAvailability.getInstance()
-                    val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(context)
-                    
-                    if (resultCode != com.google.android.gms.common.ConnectionResult.SUCCESS) {
-                        if (googleApiAvailability.isUserResolvableError(resultCode)) {
-                            viewModel.onError("UPDATE GOOGLE PLAY SERVICES")
-                            googleApiAvailability.getErrorDialog(context as android.app.Activity, resultCode, 9000)?.show()
-                        } else {
-                            viewModel.onError("GOOGLE PLAY SERVICES NOT SUPPORTED")
-                        }
-                        return@NeoBrutalistButton
-                    }
-
-                    val credentialManager = CredentialManager.create(context)
-                    
-                    // Generate a nonce (required for backend validation & security)
-                    val nonce = ByteArray(32).let {
-                        SecureRandom().nextBytes(it)
-                        Base64.encodeToString(it, Base64.NO_WRAP or Base64.URL_SAFE or Base64.NO_PADDING)
-                    }
-
-                    val googleIdOption = GetGoogleIdOption.Builder()
-                        .setFilterByAuthorizedAccounts(false)
-                        .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
-                        .setAutoSelectEnabled(false)
-                        .setNonce(nonce)
-                        .build()
-
-                    val request = GetCredentialRequest.Builder()
-                        .addCredentialOption(googleIdOption)
-                        .build()
-
-                    scope.launch {
-                        try {
-                            val result = credentialManager.getCredential(context, request)
-                            val credential = result.credential
-                            
-                            when (credential) {
-                                is GoogleIdTokenCredential -> {
-                                    viewModel.onGoogleLogin(credential.idToken)
-                                }
-                                is CustomCredential -> {
-                                    if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                                        viewModel.onGoogleLogin(googleIdTokenCredential.idToken)
-                                    } else {
-                                        Log.e("Login", "Unexpected CustomCredential type: ${credential.type}")
-                                        viewModel.onError("LOGIN FAILED: UNKNOWN TYPE")
-                                    }
-                                }
-                                else -> {
-                                    Log.e("Login", "Unexpected credential type: ${credential::class.java.name}")
-                                    viewModel.onError("LOGIN FAILED: RETRY")
-                                }
-                            }
-                        } catch (e: Exception) {
-                            Log.e("Login", "Credential Manager Error", e)
-                            val errorMessage = when {
-                                e.message?.contains("no provider dependencies found") == true -> "SIGN IN TO GOOGLE ON DEVICE\nOR UPDATE PLAY SERVICES"
-                                e.message?.contains("SERVICE_VERSION_UPDATE_REQUIRED") == true -> "UPDATE GOOGLE PLAY SERVICES"
-                                e is androidx.credentials.exceptions.GetCredentialCancellationException -> "SIGN IN CANCELLED"
-                                else -> "AUTH ERROR: ${e.message?.take(30) ?: "UNKNOWN"}"
-                            }
-                            viewModel.onError(errorMessage)
-                        }
-                    }
-                },
+                onClick = onLoginClick,
                 containerColor = PrimaryPurple,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -174,4 +177,14 @@ fun LoginScreen(
             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
         )
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenPreview() {
+    LoginContent(
+        isLoading = false,
+        error = null,
+        onLoginClick = {}
+    )
 }

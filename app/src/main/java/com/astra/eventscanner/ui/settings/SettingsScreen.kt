@@ -13,6 +13,7 @@ import com.astra.eventscanner.ui.components.NeoBrutalistButton
 import com.astra.eventscanner.ui.theme.Black
 import com.astra.eventscanner.ui.theme.Cream
 import com.astra.eventscanner.ui.theme.ErrorRed
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun SettingsScreen(
@@ -69,4 +70,13 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxWidth()
         )
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SettingsScreenPreview() {
+    SettingsScreen(
+        onLogout = {},
+        onChangeEvent = {}
+    )
 }
