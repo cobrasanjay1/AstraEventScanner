@@ -26,11 +26,15 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
         val apiBaseUrl = System.getenv("API_BASE_URL")
+            ?.takeIf { it.isNotBlank() }
             ?: localProperties.getProperty("API_BASE_URL")
-            ?: "https://astra-events.onrender.com/"
+            ?.takeIf { it.isNotBlank() }
+            ?: "https://api.astraietm.in/"
         val googleClientId = System.getenv("GOOGLE_CLIENT_ID")
+            ?.takeIf { it.isNotBlank() }
             ?: localProperties.getProperty("GOOGLE_CLIENT_ID")
-            ?: ""
+            ?.takeIf { it.isNotBlank() }
+            ?: "341883886940-vtbo7chmmlqpmc86bqgqbipfa4f495dn.apps.googleusercontent.com"
 
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("String", "GOOGLE_CLIENT_ID", "\"$googleClientId\"")
