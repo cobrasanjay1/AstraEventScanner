@@ -25,13 +25,33 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        buildConfigField("String", "API_BASE_URL", "\"${localProperties.getProperty("API_BASE_URL") ?: ""}\"")
-        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"${localProperties.getProperty("GOOGLE_CLIENT_ID") ?: ""}\"")
+        val apiBaseUrl = System.getenv("API_BASE_URL") ?: localProperties.getProperty("API_BASE_URL") ?: ""
+        val googleClientId = System.getenv("GOOGLE_CLIENT_ID") ?: localProperties.getProperty("GOOGLE_CLIENT_ID") ?: ""
+
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("String", "GOOGLE_CLIENT_ID", "\"$googleClientId\"")
+    }
+
+    signingConfigs {
+        create("release") {
+            val keystoreFilePath = System.getenv("KEYSTORE_FILE_PATH") ?: "release.keystore"
+            val keystoreFile = file(keystoreFilePath)
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+                keyAlias = System.getenv("KEY_ALIAS") ?: ""
+                keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            val keystoreFilePath = System.getenv("KEYSTORE_FILE_PATH") ?: "release.keystore"
+            if (file(keystoreFilePath).exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
