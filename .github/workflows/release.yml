@@ -1,4 +1,4 @@
-name: Build & Release Android App
+name: Build & Release Android App v2
 
 on:
   push:
