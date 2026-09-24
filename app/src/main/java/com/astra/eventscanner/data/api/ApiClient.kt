@@ -23,8 +23,16 @@ object ApiClient {
                 .addInterceptor(AuthInterceptor(sessionManager))
                 .build()
 
+            val rawUrl = BuildConfig.API_BASE_URL.trim()
+            val baseUrl = when {
+                rawUrl.isNotBlank() && (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) -> {
+                    if (rawUrl.endsWith("/")) rawUrl else "$rawUrl/"
+                }
+                else -> "https://astra-events.onrender.com/"
+            }
+
             val retrofit = Retrofit.Builder()
-                .baseUrl(BuildConfig.API_BASE_URL)
+                .baseUrl(baseUrl)
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(client)
                 .build()

@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.AstraEventScanner" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.AstraEventScanner" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>

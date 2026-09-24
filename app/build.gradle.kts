@@ -25,8 +25,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
-        val apiBaseUrl = System.getenv("API_BASE_URL") ?: localProperties.getProperty("API_BASE_URL") ?: ""
-        val googleClientId = System.getenv("GOOGLE_CLIENT_ID") ?: localProperties.getProperty("GOOGLE_CLIENT_ID") ?: ""
+        val apiBaseUrl = System.getenv("API_BASE_URL")
+            ?: localProperties.getProperty("API_BASE_URL")
+            ?: "https://astra-events.onrender.com/"
+        val googleClientId = System.getenv("GOOGLE_CLIENT_ID")
+            ?: localProperties.getProperty("GOOGLE_CLIENT_ID")
+            ?: ""
 
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("String", "GOOGLE_CLIENT_ID", "\"$googleClientId\"")
