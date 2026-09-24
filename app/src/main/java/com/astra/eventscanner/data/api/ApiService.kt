@@ -16,6 +16,7 @@ interface ApiService {
     @GET("api/verify/{token}/")
     suspend fun verifyTicket(
         @Path("token") token: String,
+        @Query("check_only") checkOnly: Boolean? = null,
         @Query("mark_used") markUsed: Boolean? = null
     ): ScanResponse
 
