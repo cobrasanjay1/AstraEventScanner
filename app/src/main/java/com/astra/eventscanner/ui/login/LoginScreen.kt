@@ -1,5 +1,8 @@
 package com.astra.eventscanner.ui.login
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.util.Base64
 import android.util.Log
 import androidx.compose.foundation.Image
@@ -35,6 +38,17 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
 import java.security.SecureRandom
 
+private fun Context.findActivity(): Activity? {
+    var currentContext = this
+    while (currentContext is ContextWrapper) {
+        if (currentContext is Activity) {
+            return currentContext
+        }
+        currentContext = currentContext.baseContext
+    }
+    return null
+}
+
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,
@@ -54,17 +68,29 @@ fun LoginScreen(
         isLoading = isLoading,
         error = error,
         onLoginClick = {
-            val googleApiAvailability = com.google.android.gms.common.GoogleApiAvailability.getInstance()
-            val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(context)
-            
-            if (resultCode != com.google.android.gms.common.ConnectionResult.SUCCESS) {
-                if (googleApiAvailability.isUserResolvableError(resultCode)) {
-                    viewModel.onError("UPDATE GOOGLE PLAY SERVICES")
-                    googleApiAvailability.getErrorDialog(context as android.app.Activity, resultCode, 9000)?.show()
-                } else {
-                    viewModel.onError("GOOGLE PLAY SERVICES NOT SUPPORTED")
+            try {
+                val serverClientId = BuildConfig.GOOGLE_CLIENT_ID.trim()
+                if (serverClientId.isBlank()) {
+                    viewModel.onError("GOOGLE CLIENT ID NOT SET IN CONFIG")
+                    return@LoginContent
                 }
-            } else {
+
+                val activity = context.findActivity()
+                val googleApiAvailability = com.google.android.gms.common.GoogleApiAvailability.getInstance()
+                val resultCode = googleApiAvailability.isGooglePlayServicesAvailable(context)
+                
+                if (resultCode != com.google.android.gms.common.ConnectionResult.SUCCESS) {
+                    if (googleApiAvailability.isUserResolvableError(resultCode)) {
+                        viewModel.onError("UPDATE GOOGLE PLAY SERVICES")
+                        if (activity != null) {
+                            googleApiAvailability.getErrorDialog(activity, resultCode, 9000)?.show()
+                        }
+                    } else {
+                        viewModel.onError("GOOGLE PLAY SERVICES NOT SUPPORTED")
+                    }
+                    return@LoginContent
+                }
+
                 val credentialManager = CredentialManager.create(context)
                 val nonce = ByteArray(32).let {
                     SecureRandom().nextBytes(it)
@@ -73,7 +99,7 @@ fun LoginScreen(
 
                 val googleIdOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
-                    .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
+                    .setServerClientId(serverClientId)
                     .setAutoSelectEnabled(false)
                     .setNonce(nonce)
                     .build()
@@ -84,7 +110,13 @@ fun LoginScreen(
 
                 scope.launch {
                     try {
-                        val result = credentialManager.getCredential(context, request)
+                        val targetActivity = activity ?: context.findActivity()
+                        val result = if (targetActivity != null) {
+                            credentialManager.getCredential(targetActivity, request)
+                        } else {
+                            credentialManager.getCredential(context, request)
+                        }
+
                         val credential = result.credential
                         when (credential) {
                             is GoogleIdTokenCredential -> viewModel.onGoogleLogin(credential.idToken)
@@ -99,6 +131,7 @@ fun LoginScreen(
                             else -> viewModel.onError("LOGIN FAILED: RETRY")
                         }
                     } catch (e: Exception) {
+                        Log.e("LoginScreen", "Google Sign-In Exception", e)
                         val errorMessage = when {
                             e.message?.contains("no provider dependencies found") == true -> "SIGN IN TO GOOGLE ON DEVICE\nOR UPDATE PLAY SERVICES"
                             e.message?.contains("SERVICE_VERSION_UPDATE_REQUIRED") == true -> "UPDATE GOOGLE PLAY SERVICES"
@@ -108,6 +141,9 @@ fun LoginScreen(
                         viewModel.onError(errorMessage)
                     }
                 }
+            } catch (e: Exception) {
+                Log.e("LoginScreen", "Fatal Login Click Exception", e)
+                viewModel.onError("LOGIN ERROR: ${e.message?.take(30) ?: "UNEXPECTED"}")
             }
         }
     )
