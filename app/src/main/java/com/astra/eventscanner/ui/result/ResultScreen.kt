@@ -135,7 +135,13 @@ fun ResultContent(
                 DecisionState.PENDING -> "STATUS: UNCHECKED"
                 DecisionState.ALLOWED -> "STATUS: ATTENDED (USED)"
                 DecisionState.DENIED -> "STATUS: DENIED (NOT USED)"
-                DecisionState.INVALID_OR_ERROR -> "STATUS: ${registrant.status}"
+                DecisionState.INVALID_OR_ERROR -> when {
+                    response.message.contains("WRONG EVENT") -> "STATUS: NOT USED"
+                    response.message.contains("ALREADY USED") -> "STATUS: ATTENDED"
+                    response.message.contains("CANCELLED") -> "STATUS: CANCELLED"
+                    response.message.contains("PENDING") -> "STATUS: PAYMENT PENDING"
+                    else -> "STATUS: ${registrant.status}"
+                }
             }
             Text(
                 text = displayStatus,
