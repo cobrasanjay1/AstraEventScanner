@@ -8,11 +8,21 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+enum class DecisionState {
+    PENDING,
+    ALLOWED,
+    DENIED,
+    INVALID_OR_ERROR
+}
+
 class ScannerViewModel(
     private val ticketRepository: TicketRepository
 ) : ViewModel() {
     private val _scanResult = MutableStateFlow<ScanResponse?>(null)
     val scanResult: StateFlow<ScanResponse?> = _scanResult
+
+    private val _decisionState = MutableStateFlow(DecisionState.PENDING)
+    val decisionState: StateFlow<DecisionState> = _decisionState
 
     private val _isScanning = MutableStateFlow(true)
     val isScanning: StateFlow<Boolean> = _isScanning
@@ -46,6 +56,11 @@ class ScannerViewModel(
                 if (response != null) {
                     val finalResponse = applySafetyChecks(response, selectedEventId)
                     _scanResult.value = finalResponse
+                    if (finalResponse.valid && finalResponse.registrant != null) {
+                        _decisionState.value = DecisionState.PENDING
+                    } else {
+                        _decisionState.value = DecisionState.INVALID_OR_ERROR
+                    }
                 }
             } else {
                 // Handle 404 or other network errors
@@ -61,8 +76,54 @@ class ScannerViewModel(
                     message = message,
                     registrant = null
                 )
+                _decisionState.value = DecisionState.INVALID_OR_ERROR
             }
         }
+    }
+
+    fun allowTicket() {
+        val currentToken = lastScannedToken
+        val currentResponse = _scanResult.value
+        val registrant = currentResponse?.registrant
+
+        viewModelScope.launch {
+            if (currentToken != null) {
+                _isLoading.value = true
+                ticketRepository.markTicketUsed(currentToken)
+                _isLoading.value = false
+            }
+
+            if (currentResponse != null && registrant != null) {
+                val updatedRegistrant = registrant.copy(
+                    isUsed = true,
+                    status = "ATTENDED"
+                )
+                _scanResult.value = currentResponse.copy(
+                    valid = true,
+                    message = "ENTRY ALLOWED",
+                    registrant = updatedRegistrant
+                )
+            }
+            _decisionState.value = DecisionState.ALLOWED
+        }
+    }
+
+    fun denyTicket() {
+        val currentResponse = _scanResult.value
+        val registrant = currentResponse?.registrant
+
+        if (currentResponse != null && registrant != null) {
+            val updatedRegistrant = registrant.copy(
+                isUsed = false,
+                status = registrant.status
+            )
+            _scanResult.value = currentResponse.copy(
+                valid = false,
+                message = "ENTRY DENIED",
+                registrant = updatedRegistrant
+            )
+        }
+        _decisionState.value = DecisionState.DENIED
     }
 
     private fun applySafetyChecks(response: ScanResponse, selectedEventId: Int): ScanResponse {
@@ -105,6 +166,7 @@ class ScannerViewModel(
 
     fun resetScanner() {
         _scanResult.value = null
+        _decisionState.value = DecisionState.PENDING
         _isScanning.value = true
         _error.value = null
         lastScannedToken = null

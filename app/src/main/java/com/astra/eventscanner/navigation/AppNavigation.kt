@@ -84,6 +84,7 @@ fun AppNavigation(navController: NavHostController) {
             val viewModel: ScannerViewModel = viewModel(factory = GenericViewModelFactory { ScannerViewModel(ticketRepository) })
             
             val scanResult by viewModel.scanResult.collectAsState()
+            val decisionState by viewModel.decisionState.collectAsState()
             
             Box {
                 ScannerScreen(
@@ -97,9 +98,13 @@ fun AppNavigation(navController: NavHostController) {
                 )
 
                 if (scanResult != null) {
-                    ResultScreen(response = scanResult!!) {
-                        viewModel.resetScanner()
-                    }
+                    ResultScreen(
+                        response = scanResult!!,
+                        decisionState = decisionState,
+                        onAllow = { viewModel.allowTicket() },
+                        onDeny = { viewModel.denyTicket() },
+                        onScanNext = { viewModel.resetScanner() }
+                    )
                 }
             }
         }

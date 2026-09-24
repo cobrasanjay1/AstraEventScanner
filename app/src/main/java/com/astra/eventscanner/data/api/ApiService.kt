@@ -15,6 +15,12 @@ interface ApiService {
 
     @GET("api/verify/{token}/")
     suspend fun verifyTicket(
+        @Path("token") token: String,
+        @Query("mark_used") markUsed: Boolean? = null
+    ): ScanResponse
+
+    @POST("api/verify/{token}/")
+    suspend fun markTicketUsed(
         @Path("token") token: String
     ): ScanResponse
 

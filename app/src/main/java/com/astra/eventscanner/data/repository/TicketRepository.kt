@@ -12,4 +12,17 @@ class TicketRepository(private val apiService: ApiService) {
             Result.failure(e)
         }
     }
+
+    suspend fun markTicketUsed(token: String): Result<ScanResponse> {
+        return try {
+            val response = try {
+                apiService.markTicketUsed(token)
+            } catch (e: Exception) {
+                apiService.verifyTicket(token, markUsed = true)
+            }
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
